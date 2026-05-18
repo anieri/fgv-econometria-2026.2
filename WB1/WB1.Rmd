@@ -2,8 +2,8 @@
 title: "WB1"
 author: "Andre Nieri, Livio Kuze"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
 ```{r}
@@ -13,30 +13,25 @@ data = read_excel("Pesquisa.xlsx", range = "A1:M178")
 df = as.data.frame(data)
 head(df)
 
-model = lm(salario ~ temceo, data = df)
+model = lm(valmkt ~ temceo, data = df)
 summary(model)
 
-salario_hat = predict(model, newdata = data.frame(temceo=10))
-salario_hat
-
-temceo_coef = coef(model)["temceo"]
+temceo_coef = 0.01 * coef(model)["temceo"] * 1000
 model_conselho = 300 + temceo_coef * 10
 model_conselho
 
-model_valmkt = lm(salario ~ valmkt, data = df)
+model_valmkt = lm(valmkt ~ lucro, data = df)
 summary(model_valmkt)
 ```
 
 1.  Interpretação:
 
-    O intercepto nos dá um valor de 772.43 mil dólares de salário base, e o coeficiente associado à experiência nos dá um valor de 11.75 mil dólares para cada ano adicional de experiência do CEO.
+    O intercepto nos dá um valor de mercado base de 3.552 bilhões de dólares, e o coeficiente associado à experiência nos dá uma relação de 5.95 milhões de dólares adicionais para cada ano adicional de experiência do CEO.
 
-2.  Usando o modelo ajustado `(intercepto=772.43, temceo=11.75)` teríamos uma remuneração de 889.89 mil dólares.
+2.  Usando o modelo do conselho com o coeficiente ajustado anteriormente `(temceo=5.955 milhões)` teríamos uma remuneração de 300 mil + 1% * 5.95 milhões de dólares * 10 anos = 895.45 mil dólares.
 
-    Usando o modelo do conselho com o coeficiente ajustado anteriormente `(intercepto=300, temceo=11.75)` teríamos uma remuneração de 417.46 mil dólares.
+3.  Analisando os coeficientes, o intercepto é altamente significativo `(p = 2.34e-06)`, mas o coeficiente para temceo `(p = 0.93)` não tem significância nenhuma, o que sugere evidência quase nula de relação `salario ~ temceo`.
 
-3.  Analisando os coeficientes, o intercepto é altamente significativo `(p < 2e-16)`, mas o coeficiente para temceo `(p = 0.0577)` não tem significância ao nível de 5%, o que sugere evidência fraca de relação `salario ~ temceo`.
-
-    Analisando o R² `(R² = 0.02043)`, podemos dizer que o modelo explica apenas cerca de 2% da variação do salário, o que indica que há outras variáveis importantes faltando no modelo. O erro residual `(rse = 583.2)` é muito alto perto do valor ajustado de 11.75, indicando muita dispersão nos dados.
-
-    Ao tentar outros modelos de regressão simples, encontramos o modelo `salario ~ valmkt` com uma significância maior: `(intercepto=732.44, valmkt=0.03706)`, nesse caso o intercepto não faz muito sentido econômico, pois seria de uma empresa com valor de mercado zero, mas o coeficiente de valmkt indica a relação de aumento de 0.037 mil dólares para cada aumento de 1 milhão de valor de mercado da empresa, com significância alta `(p < 2e-08)`. No entanto, esse modelo ainda não explica a maior parte da variabilidade do salário, capturando cerca de 16.5% da variação total `(R² = 0.1651)`.
+    Analisando o R² `(R² = 4.368e-05)`, podemos dizer que o modelo não explica praticamente nada da variação do salário, o que indica que há outras variáveis importantes faltando no modelo. O erro residual `(rse = 6461)` é muito alto perto do valor ajustado de 5.95, indicando muita dispersão nos dados.
+    
+    Ao tentar outros modelos de regressão simples, encontramos o modelo `valmkt ~ lucro` com uma significância maior: `(intercepto=560.95, valmkt=14.62)`, nesse caso o intercepto seria para uma empresa com lucro zero, e o coeficiente de lucro indica a relação de aumento de 14.62 milhões de dólares para cada aumento de 1 milhão de lucro da empresa, com significância alta `(p < 2e-16)`. Esse modelo explica a maior parte da variabilidade do salário, capturando cerca de 84.3% da variação total `(R² = 0.843)`.

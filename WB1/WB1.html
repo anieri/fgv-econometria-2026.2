@@ -374,85 +374,79 @@ head(df)</code></pre>
 ## 4     651   1000
 ## 5     497    387
 ## 6    1067   3900</code></pre>
-<pre class="r"><code>model = lm(salario ~ temceo, data = df)
+<pre class="r"><code>model = lm(valmkt ~ temceo, data = df)
 summary(model)</code></pre>
 <pre><code>## 
 ## Call:
-## lm(formula = salario ~ temceo, data = df)
+## lm(formula = valmkt ~ temceo, data = df)
 ## 
 ## Residuals:
 ##    Min     1Q Median     3Q    Max 
-## -977.8 -345.9 -169.4  263.8 4373.9 
+##  -3344  -2995  -2359    -59  41728 
 ## 
 ## Coefficients:
 ##             Estimate Std. Error t value Pr(&gt;|t|)    
-## (Intercept)  772.426     65.676  11.761   &lt;2e-16 ***
-## temceo        11.746      6.148   1.911   0.0577 .  
+## (Intercept) 3552.949    727.518   4.884 2.34e-06 ***
+## temceo         5.955     68.101   0.087     0.93    
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
 ## 
-## Residual standard error: 583.2 on 175 degrees of freedom
-## Multiple R-squared:  0.02043,    Adjusted R-squared:  0.01484 
-## F-statistic: 3.651 on 1 and 175 DF,  p-value: 0.05769</code></pre>
-<pre class="r"><code>salario_hat = predict(model, newdata = data.frame(temceo=10))
-salario_hat</code></pre>
-<pre><code>##        1 
-## 889.8876</code></pre>
-<pre class="r"><code>temceo_coef = coef(model)[&quot;temceo&quot;]
+## Residual standard error: 6461 on 175 degrees of freedom
+## Multiple R-squared:  4.368e-05,  Adjusted R-squared:  -0.00567 
+## F-statistic: 0.007645 on 1 and 175 DF,  p-value: 0.9304</code></pre>
+<pre class="r"><code>temceo_coef = 0.01 * coef(model)[&quot;temceo&quot;] * 1000
 model_conselho = 300 + temceo_coef * 10
 model_conselho</code></pre>
-<pre><code>##   temceo 
-## 417.4613</code></pre>
-<pre class="r"><code>model_valmkt = lm(salario ~ valmkt, data = df)
+<pre><code>##  temceo 
+## 895.452</code></pre>
+<pre class="r"><code>model_valmkt = lm(valmkt ~ lucro, data = df)
 summary(model_valmkt)</code></pre>
 <pre><code>## 
 ## Call:
-## lm(formula = salario ~ valmkt, data = df)
+## lm(formula = valmkt ~ lucro, data = df)
 ## 
 ## Residuals:
 ##     Min      1Q  Median      3Q     Max 
-## -1006.7  -325.3  -112.7   235.2  4511.0 
+## -6622.2  -739.5  -416.1   193.6 19977.8 
 ## 
 ## Coefficients:
-##              Estimate Std. Error t value Pr(&gt;|t|)    
-## (Intercept) 732.44174   46.39372  15.788  &lt; 2e-16 ***
-## valmkt        0.03706    0.00630   5.882 2.01e-08 ***
+##             Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept) 560.9547   216.4889   2.591   0.0104 *  
+## lucro        14.6242     0.4772  30.649   &lt;2e-16 ***
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
 ## 
-## Residual standard error: 538.4 on 175 degrees of freedom
-## Multiple R-squared:  0.1651, Adjusted R-squared:  0.1603 
-## F-statistic:  34.6 on 1 and 175 DF,  p-value: 2.009e-08</code></pre>
+## Residual standard error: 2560 on 175 degrees of freedom
+## Multiple R-squared:  0.843,  Adjusted R-squared:  0.8421 
+## F-statistic: 939.4 on 1 and 175 DF,  p-value: &lt; 2.2e-16</code></pre>
 <ol style="list-style-type: decimal">
 <li><p>Interpretação:</p>
-<p>O intercepto nos dá um valor de 772.43 mil dólares de salário base, e
-o coeficiente associado à experiência nos dá um valor de 11.75 mil
-dólares para cada ano adicional de experiência do CEO.</p></li>
-<li><p>Usando o modelo ajustado
-<code>(intercepto=772.43, temceo=11.75)</code> teríamos uma remuneração
-de 889.89 mil dólares.</p>
-<p>Usando o modelo do conselho com o coeficiente ajustado anteriormente
-<code>(intercepto=300, temceo=11.75)</code> teríamos uma remuneração de
-417.46 mil dólares.</p></li>
+<p>O intercepto nos dá um valor de mercado base de 3.552 bilhões de
+dólares, e o coeficiente associado à experiência nos dá uma relação de
+5.95 milhões de dólares adicionais para cada ano adicional de
+experiência do CEO.</p></li>
+<li><p>Usando o modelo do conselho com o coeficiente ajustado
+anteriormente <code>(temceo=5.955 milhões)</code> teríamos uma
+remuneração de 300 mil + 1% * 5.95 milhões de dólares * 10 anos = 895.45
+mil dólares.</p></li>
 <li><p>Analisando os coeficientes, o intercepto é altamente
-significativo <code>(p &lt; 2e-16)</code>, mas o coeficiente para temceo
-<code>(p = 0.0577)</code> não tem significância ao nível de 5%, o que
-sugere evidência fraca de relação <code>salario ~ temceo</code>.</p>
-<p>Analisando o R² <code>(R² = 0.02043)</code>, podemos dizer que o
-modelo explica apenas cerca de 2% da variação do salário, o que indica
-que há outras variáveis importantes faltando no modelo. O erro residual
-<code>(rse = 583.2)</code> é muito alto perto do valor ajustado de
-11.75, indicando muita dispersão nos dados.</p>
+significativo <code>(p = 2.34e-06)</code>, mas o coeficiente para temceo
+<code>(p = 0.93)</code> não tem significância nenhuma, o que sugere
+evidência quase nula de relação <code>salario ~ temceo</code>.</p>
+<p>Analisando o R² <code>(R² = 4.368e-05)</code>, podemos dizer que o
+modelo não explica praticamente nada da variação do salário, o que
+indica que há outras variáveis importantes faltando no modelo. O erro
+residual <code>(rse = 6461)</code> é muito alto perto do valor ajustado
+de 5.95, indicando muita dispersão nos dados.</p>
 <p>Ao tentar outros modelos de regressão simples, encontramos o modelo
-<code>salario ~ valmkt</code> com uma significância maior:
-<code>(intercepto=732.44, valmkt=0.03706)</code>, nesse caso o
-intercepto não faz muito sentido econômico, pois seria de uma empresa
-com valor de mercado zero, mas o coeficiente de valmkt indica a relação
-de aumento de 0.037 mil dólares para cada aumento de 1 milhão de valor
-de mercado da empresa, com significância alta
-<code>(p &lt; 2e-08)</code>. No entanto, esse modelo ainda não explica a
-maior parte da variabilidade do salário, capturando cerca de 16.5% da
-variação total <code>(R² = 0.1651)</code>.</p></li>
+<code>valmkt ~ lucro</code> com uma significância maior:
+<code>(intercepto=560.95, valmkt=14.62)</code>, nesse caso o intercepto
+seria para uma empresa com lucro zero, e o coeficiente de lucro indica a
+relação de aumento de 14.62 milhões de dólares para cada aumento de 1
+milhão de lucro da empresa, com significância alta
+<code>(p &lt; 2e-16)</code>. Esse modelo explica a maior parte da
+variabilidade do salário, capturando cerca de 84.3% da variação total
+<code>(R² = 0.843)</code>.</p></li>
 </ol>
 
 
