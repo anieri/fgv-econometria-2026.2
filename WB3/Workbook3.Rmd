@@ -1,0 +1,80 @@
+---
+title: "Workbook3"
+author: "Andre Nieri, Livio Kuze"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r message=FALSE, warning=FALSE}
+library(lmtest)
+library(sandwich)
+
+data = read.csv('paises.csv')
+head(data)
+
+n = nrow(data)
+n_nona = sum(complete.cases(data[, c("avg_household_income", "share_sewage", "share_water")]))
+
+cat("Total Rows =", n, "\n")
+cat("Rows without NA =", n_nona, "\n")
+
+
+model = lm(avg_household_income ~ share_sewage + share_water, data = data)
+summary(model)
+
+
+robust_model = coeftest(model, vcov = vcovHC(model, type = "HC1"))
+print(robust_model)
+```
+
+\newpage
+
+**Nota metodológica:**
+
+A base de dados original fornecida para esta análise compreende um painel com 60 observações de países em diferentes períodos. No entanto, identifica-se uma severa ausência de dados nas variáveis explicativas utilizadas, especificamente em share_water e share_sewage.
+
+Metodologicamente, optou-se por restringir a estimação do modelo econométrico aos casos completos, eliminando as linhas com dados faltantes. Essa escolha preserva a integridade estatística e evita as distorções artificiais de variância inerentes a métodos de imputação arbitrários por médias. Como consequência direta, a amostra efetiva de regressão é reduzida de 60 para 24 observações.
+
+Isso impõe duas limitações importantes à interpretação dos resultados:
+
+i) Perda de Poder Estatístico: O tamanho diminuto da amostra ($n = 24$) inflaciona os erros padrão dos estimadores de Mínimos Quadrados Ordinários (MQO), elevando o rigor necessário para a rejeição da hipótese nula de não-significância.
+
+ii) Viés de Seleção Amostral: A omissão de indicadores de saneamento básico não ocorre de forma aleatória no cenário global; ela concentra-se historicamente em nações de menor renda, menor capacidade institucional ou em estado de vulnerabilidade socioeconômica. Portanto, as estimativas resultantes refletem predominantemente o comportamento de países com estruturas estatísticas mais consolidadas, configurando um limite inferior (lower bound) do impacto real da privação de saneamento sobre o desenvolvimento.
+
+**Questões:**
+
+1)
+
+Temos o modelo:
+$avg\_household\_income_{j,t} = \alpha 0 + \alpha 1 share\_sewage_{j,t} + \alpha 2 share\_water_{j,t} + \epsilon_{j,t}$
+
+Observamos os seguintes coeficientes:
+
+Intercepto ($\alpha 0 = 24544$): Representa a renda domiciliar média anual esperada de um país com acesso universal à água e esgoto. O valor esperado será de $ 24.544,00 (em dólares PPP).
+
+Coeficiente de share_sewage ($\alpha 1 = -26654$): Representa o impacto na renda de um país ao mover-se de um cenário de acesso universal (100% = 1) para a privação total (0% = 0) de esgoto. Mantendo o acesso à água constante, o aumento de 1% na proporção de domicílios sem esgoto tratado está associado a uma redução de $ 266,54 dólares PPP na renda domiciliar média anual.
+
+Coeficiente de share_water ($\alpha 2 = -5267$): Representa o impacto correspondente para a privação total de acesso à água. Mantendo o acesso ao tratamento de esgoto constante, o aumento de 1% na proporção de domicílios sem água está associado a uma redução de $ 52,67 dólares PPP na renda domiciliar média anual.
+
+
+2)
+
+Temos somente o coeficiente de share_sewage (`p-valor = 0.00623`) estatisticamente significantes a 5%. Nota: também é significante a 1%.
+
+No caso, o coeficiente de share_water (`p-valor = 0.57394`) não é estatisticamente significante a 5%.
+
+Conclusão: Sob a premissa de homocedasticidade, apenas a falta de tratamento de esgoto pareceria correlacionado significativamente com menor desenvolvimento econômico do país.
+
+3)
+
+Ao aplicar a correção de White para heteroscedasticidade, ainda temos somente o coeficiente de share_sewage (`p-valor = 0.0006812`) significante a 5%. Nota: agora também é significante a 0.1%.
+
+O coeficiente de share_water (`p-valor = 0.1004243`) continua não sendo estatisticamente significante a 5%.
+
+
+**Notas Finais:**
+
+Há evidência de heteroscedasticidade nos dados, devido à queda dos erros padrões dos coeficientes (queda de ~23.6% em share_sewage, e de ~66.8% em share_water).
+
+O tamanho da amostra pode ter impactado a análise, reduzindo o poder do teste. É possível que o coeficiente de share_water (que ficou com p-valor ~0.10) possa ter ficado não-significante a 5% justamente porque a amostra ficou pequena demais para capturar o efeito com precisão, e não porque acesso a água não importa na vida real.
