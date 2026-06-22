@@ -1,0 +1,103 @@
+---
+title: "Workbook5"
+author: "Andre Nieri, Livio Kuze"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r message=FALSE, warning=FALSE}
+library(data.table)
+library(AER)
+library(lmtest)
+library(sandwich)
+
+full_data = fread(
+  "censo_data_family_size.csv",
+  select=c("family_number_births",
+           "family_number_children",
+           "first_child_years_of_education",
+           #"first_birth_ismultiplebirth",
+           "second_birth_ismultiplebirth"))
+
+filtered_data = 
+  full_data[family_number_children >= 2]
+
+avg_no_children = mean(filtered_data$family_number_children, na.rm = TRUE)
+cat("Tamanho Familiar Médio =", avg_no_children, "\n")
+
+model_ols = lm(first_child_years_of_education ~ family_number_children, data = filtered_data)
+print(summary(model_ols))
+
+n_second_birth_multiple = sum(filtered_data$second_birth_ismultiplebirth == 1, na.rm = TRUE)
+cat("Total de famílias com segundo parto com mais de uma criança = ", n_second_birth_multiple, "\n")
+
+stage_1 = lm(family_number_children ~ second_birth_ismultiplebirth, data = filtered_data)
+print(summary(stage_1))
+
+model_iv = ivreg(first_child_years_of_education ~ family_number_children | second_birth_ismultiplebirth, 
+                 data = filtered_data)
+
+coeftest(model_iv, vcov = vcovHC(model_iv, type = "HC1"))
+
+```
+
+
+1
+
+O tamanho familiar médio, para famílias com mais de um filho, é de aprox. 2.695 filhos.
+
+2
+
+Temos o modelo:
+$first\_child\_years\_of\_education_{i} = \beta0 + \beta1 family\_number\_children_{i} + \epsilon_{i}$
+
+Observamos os seguintes coeficientes:
+
+Intercepto ($\beta0 = 6.706$): Aqui não faz muito sentido, pois representa o número teórico de anos de educação esperada para o primeiro filho caso a família tivesse zero filhos (apenas uma referência matemática, pois estamos filtrando as famílias com dois ou mais filhos).
+
+Coeficiente de family_number_children ($\beta1 = -0.389$): Cada filho adicional na família está associado a uma redução média de aproximadamente 0,39 anos (~4.7 meses) de estudo na trajetória de educação do primeiro filho.
+
+Significância: os p-valores para o intercepto e o coeficiente de family_number_children são extremamente significativos (`p-valor < 2e-16` para ambos), com certeza significantes a 5%.
+
+3
+
+A estimativa obtida não é crível como um efeito causal, pois o modelo sofre de problema de endogeneidade, devido ao viés de variáveis omitidas.
+Para que o coeficiente de MQO representasse verdadeiramente o impacto causal do número de filhos sobre a educação do mais velho, seria necessário que a decisão de ter mais filhos fosse aleatória na sociedade.
+Na realidade, essa decisão e a decisão sobre educação dependem de vários fatores socioeconômicos (ex: renda familiar) e culturais (ex: escolaridade dos pais, background cultural) não inluídos na regressão simples.
+
+4
+
+Total de famílias com segundo parto com mais de uma criança =  9632
+
+5
+
+Deve satisfazer:
+
+* Hipótese de relevância do instrumento ($Cov(Z, X) \neq 0$), ou seja, o instrumento deve estar correlacionado com a variável endógena. A ocorrência de gêmeos/múltiplos gera um choque exógeno positivo e imediato no número total de filhos.
+
+* Hipótese de exogeneidade ($Cov(Z, \epsilon) = 0$), ou seja, o instrumento afeta a variável dependente (Y) única e exclusivamente através do canal da variável endógena (X). A ocorrência de parto múltiplo é tratado como choque puramente biológico e aleatório.
+
+Possíveis violações:
+
+* Choque financeiro: o parto de dois ou mais filhos gera uma pressão financeira no orçamento familiar (vários custos de cuidar da criança serão duplicados/multiplicados)
+
+* Choque de tempo e atenção: Gêmeos exigem maior atenção parental, que pode remover a atenção e tempo dos pais sobre a educação do primeiro filho.
+
+6
+
+Temos o modelo:
+$family\_number\_children_{i} = \beta0 + \beta1 second\_birth\_ismultiplebirth_{i} + \epsilon_{i}$
+
+Coeficiente de second_birth_ismultiplebirth ($\beta1 = 1.098$): O choque biológico de ter gêmeos (ou parto múltiplo) no segundo nascimento causa um aumento médio esperado de aprox. 1.10 filhos no tamanho final da família, controlando pelo fato de a família já ter atingido o segundo parto.
+
+Significância: os p-valores para o intercepto e o coeficiente de second_birth_ismultiplebirth são extremamente significativos (`p-valor < 2e-16` para ambos), com certeza significantes a 5%. O erro padrão de 0.0109 é baixo, e a t-statistic de 100.5 e F-statistic de 1.011*10^4, mostram que não é um instrumento fraco.
+
+7
+
+Temos o modelo:
+$first\_child\_years\_of\_education_{i} = \beta0 + \beta1 family\_number\_children_{i} + \epsilon_{i}$
+
+Coeficiente de family_number_children ($\beta1 = -0.368$): Isolando apenas a variabilidade exógena do tamanho da família (causada estritamente pelo choque biológico do nascimento de gêmeos no segundo parto), cada filho adicional na família causa uma redução média de aproximadamente 0.37 anos (cerca de 4.4 meses) de estudo na educação do primeiro filho. Esse coeficiente estima o Local Average Treatment Effect (LATE) sobre as famílias afetadas pelo instrumento.
+
+Significância: os p-valores para o intercepto e o coeficiente de family_number_children são extremamente significativos (`p-valor < 2e-16` para ambos), com certeza significantes a 5%. O erro padrão robusto de 0.0292 é baixo.
